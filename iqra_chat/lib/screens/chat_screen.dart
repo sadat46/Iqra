@@ -8,6 +8,7 @@ import '../services/media_service.dart';
 import '../models/message_model.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/media_message_bubble.dart';
+import 'package:flutter/services.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -191,6 +192,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           message: message,
                           isMe: isMe,
                           onImageTap: () => _showFullScreenImage(message.mediaUrl!),
+                          onDelete: isMe ? () => _deleteMessage(message.id) : null,
                         );
                       }
                       
@@ -198,6 +200,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       return MessageBubble(
                         message: message,
                         isMe: isMe,
+                        onDelete: isMe ? () => _deleteMessage(message.id) : null,
                       );
                     },
                   );
@@ -221,6 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             child: Row(
               children: [
+
                 // Attachment button
                 IconButton(
                   icon: const Icon(Icons.attach_file),
@@ -535,5 +539,51 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Future<void> _deleteMessage(String messageId) async {
+    try {
+      await _chatService.deleteMessage(messageId);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Message deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting message: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
+  Future<void> _pasteFromClipboard() async {
+    final clipboardData = await Clipboard.getData('text/plain');
+    final text = clipboardData?.text ?? '';
+    if (text.isNotEmpty) {
+      final oldText = _messageController.text;
+      final selection = _messageController.selection;
+      final newText = oldText.replaceRange(
+        selection.start,
+        selection.end,
+        text,
+      );
+      _messageController.text = newText;
+      _messageController.selection = TextSelection.collapsed(
+        offset: selection.start + text.length,
+      );
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Clipboard is empty!'), duration: Duration(seconds: 1)),
+        );
+      }
+    }
+  }
 }

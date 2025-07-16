@@ -10,7 +10,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     
     <application
-        android:label="iqra_chat"
+        android:label="Iqra"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

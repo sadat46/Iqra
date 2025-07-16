@@ -5,11 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_constants.dart';
 import '../models/message_model.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
 
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -28,7 +28,8 @@ class NotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('User granted notification permission');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
       print('User granted provisional notification permission');
     } else {
       print('User declined notification permission');
@@ -71,16 +72,16 @@ class NotificationService {
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
     const InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
 
     await _localNotifications.initialize(
       initializationSettings,
@@ -103,23 +104,26 @@ class NotificationService {
       enableLights: true,
     );
 
-    const AndroidNotificationChannel generalChannel = AndroidNotificationChannel(
-      'general_channel',
-      'General Notifications',
-      description: 'General app notifications',
-      importance: Importance.defaultImportance,
-      playSound: true,
-      enableVibration: true,
-    );
+    const AndroidNotificationChannel generalChannel =
+        AndroidNotificationChannel(
+          'general_channel',
+          'General Notifications',
+          description: 'General app notifications',
+          importance: Importance.defaultImportance,
+          playSound: true,
+          enableVibration: true,
+        );
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(chatChannel);
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(generalChannel);
   }
 
@@ -130,15 +134,15 @@ class NotificationService {
           .collection(AppConstants.usersCollection)
           .doc(_auth.currentUser!.uid)
           .update({
-        'fcmToken': token,
-        'lastTokenUpdate': FieldValue.serverTimestamp(),
-        'notificationSettings': {
-          'enabled': true,
-          'sound': true,
-          'vibration': true,
-          'badge': true,
-        },
-      });
+            'fcmToken': token,
+            'lastTokenUpdate': FieldValue.serverTimestamp(),
+            'notificationSettings': {
+              'enabled': true,
+              'sound': true,
+              'vibration': true,
+              'badge': true,
+            },
+          });
     }
   }
 
@@ -149,13 +153,15 @@ class NotificationService {
 
     if (message.notification != null) {
       print('Message also contained a notification: ${message.notification}');
-      
+
       // Show local notification
       _showLocalNotification(
         title: message.notification!.title ?? 'New Message',
         body: message.notification!.body ?? '',
         payload: message.data.toString(),
-        channelId: message.data['type'] == 'chat' ? 'chat_channel' : 'general_channel',
+        channelId: message.data['type'] == 'chat'
+            ? 'chat_channel'
+            : 'general_channel',
       );
     }
   }
@@ -163,7 +169,7 @@ class NotificationService {
   // Handle notification tap
   void _handleNotificationTap(RemoteMessage message) {
     print('Notification tapped: ${message.data}');
-    
+
     // Navigate to specific chat if chatId is provided
     if (message.data['chatId'] != null) {
       // You can implement navigation logic here
@@ -187,26 +193,26 @@ class NotificationService {
   }) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'chat_channel',
-      'Chat Messages',
-      channelDescription: 'Notifications for new chat messages',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: true,
-      enableVibration: true,
-      playSound: true,
-      enableLights: true,
-      icon: '@mipmap/ic_launcher',
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-    );
+          'chat_channel',
+          'Chat Messages',
+          channelDescription: 'Notifications for new chat messages',
+          importance: Importance.high,
+          priority: Priority.high,
+          showWhen: true,
+          enableVibration: true,
+          playSound: true,
+          enableLights: true,
+          icon: '@mipmap/ic_launcher',
+          largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+        );
 
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
         DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-      badgeNumber: 1,
-    );
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          badgeNumber: 1,
+        );
 
     const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
@@ -239,11 +245,13 @@ class NotificationService {
       if (userDoc.exists) {
         Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
         String? fcmToken = userData['fcmToken'];
-        Map<String, dynamic>? notificationSettings = userData['notificationSettings'];
+        Map<String, dynamic>? notificationSettings =
+            userData['notificationSettings'];
 
         if (fcmToken != null) {
           // Check if notifications are enabled for this user
-          if (notificationSettings != null && notificationSettings['enabled'] == false) {
+          if (notificationSettings != null &&
+              notificationSettings['enabled'] == false) {
             print('Notifications disabled for user: $userId');
             return;
           }
@@ -252,7 +260,7 @@ class NotificationService {
           // In a real app, you might want to implement direct FCM sending
           print('Sending notification to user $userId');
           print('Title: $title, Body: $body, Data: $data');
-          
+
           // Show local notification for the current user (for testing)
           if (_auth.currentUser != null && _auth.currentUser!.uid == userId) {
             _showLocalNotification(
@@ -288,15 +296,16 @@ class NotificationService {
           .get();
 
       if (senderDoc.exists) {
-        Map<String, dynamic> senderData = senderDoc.data() as Map<String, dynamic>;
+        Map<String, dynamic> senderData =
+            senderDoc.data() as Map<String, dynamic>;
         String senderName = senderData['displayName'] ?? 'Unknown User';
-        
+
         // Prepare notification data
         String notificationTitle = senderName;
-        String notificationBody = messageType == MessageType.image 
-            ? '📷 Sent you an image' 
+        String notificationBody = messageType == MessageType.image
+            ? '📷 Sent you an image'
             : message;
-        
+
         Map<String, dynamic> notificationData = {
           'type': 'chat',
           'chatId': chatId,
@@ -335,21 +344,21 @@ class NotificationService {
   // Delete FCM token (for logout)
   Future<void> deleteToken() async {
     await _messaging.deleteToken();
-    
+
     // Also remove from Firestore
     if (_auth.currentUser != null) {
       await _firestore
           .collection(AppConstants.usersCollection)
           .doc(_auth.currentUser!.uid)
           .update({
-        'fcmToken': null,
-        'notificationSettings': {
-          'enabled': false,
-          'sound': false,
-          'vibration': false,
-          'badge': false,
-        },
-      });
+            'fcmToken': null,
+            'notificationSettings': {
+              'enabled': false,
+              'sound': false,
+              'vibration': false,
+              'badge': false,
+            },
+          });
     }
   }
 
@@ -365,13 +374,13 @@ class NotificationService {
           .collection(AppConstants.usersCollection)
           .doc(_auth.currentUser!.uid)
           .update({
-        'notificationSettings': {
-          'enabled': enabled,
-          'sound': sound,
-          'vibration': vibration,
-          'badge': badge,
-        },
-      });
+            'notificationSettings': {
+              'enabled': enabled,
+              'sound': sound,
+              'vibration': vibration,
+              'badge': badge,
+            },
+          });
     }
   }
 
@@ -407,10 +416,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Handling a background message: ${message.messageId}');
   print('Message data: ${message.data}');
   print('Message notification: ${message.notification?.title}');
-  
+
   // Initialize Firebase if not already done
   await Firebase.initializeApp();
-  
+
   // You can add additional background processing here
   // For example, updating local storage, syncing data, etc.
-} 
+}

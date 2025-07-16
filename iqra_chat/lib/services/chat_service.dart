@@ -210,6 +210,67 @@ class ChatService {
     await _firestore.collection(AppConstants.chatsCollection).doc(chatId).delete();
   }
 
+  // Delete a specific message (only by sender)
+  Future<void> deleteMessage(String messageId) async {
+    if (currentUser == null) throw Exception('User not authenticated');
+
+    // Get the message first to verify ownership
+    DocumentSnapshot messageDoc = await _firestore
+        .collection(AppConstants.messagesCollection)
+        .doc(messageId)
+        .get();
+
+    if (!messageDoc.exists) {
+      throw Exception('Message not found');
+    }
+
+    Map<String, dynamic> messageData = messageDoc.data() as Map<String, dynamic>;
+    
+    // Check if the current user is the sender
+    if (messageData['senderId'] != currentUser!.uid) {
+      throw Exception('You can only delete your own messages');
+    }
+
+    // Delete the message
+    await _firestore
+        .collection(AppConstants.messagesCollection)
+        .doc(messageId)
+        .delete();
+
+    // Update chat's last message if this was the last message
+    String chatId = messageData['chatId'];
+    await _updateChatLastMessage(chatId);
+  }
+
+  // Update chat's last message after deletion
+  Future<void> _updateChatLastMessage(String chatId) async {
+    // Get the most recent message in the chat
+    QuerySnapshot messages = await _firestore
+        .collection(AppConstants.messagesCollection)
+        .where('chatId', isEqualTo: chatId)
+        .orderBy('createdAt', descending: true)
+        .limit(1)
+        .get();
+
+    if (messages.docs.isNotEmpty) {
+      Map<String, dynamic> lastMessageData = messages.docs.first.data() as Map<String, dynamic>;
+      String lastMessageText = lastMessageData['type'] == 'image' ? '📷 Image' : lastMessageData['text'];
+      
+      await _firestore.collection(AppConstants.chatsCollection).doc(chatId).update({
+        'lastMessage': lastMessageText,
+        'lastMessageTime': lastMessageData['createdAt'],
+        'updatedAt': DateTime.now(),
+      });
+    } else {
+      // No messages left, clear the last message
+      await _firestore.collection(AppConstants.chatsCollection).doc(chatId).update({
+        'lastMessage': null,
+        'lastMessageTime': null,
+        'updatedAt': DateTime.now(),
+      });
+    }
+  }
+
   // Get user data for chat participants
   Future<Map<String, dynamic>> getUserData(String uid) async {
     DocumentSnapshot doc = await _firestore
