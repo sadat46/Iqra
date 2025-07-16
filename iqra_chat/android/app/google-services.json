@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "676915280361",
+    "project_id": "iqrachat-42fd4",
+    "storage_bucket": "iqrachat-42fd4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:676915280361:android:c2725dc389d9bf10dc3378",
+        "android_client_info": {
+          "package_name": "com.example.iqra_chat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTZ3j-b0EEZVWGO4BeoXsQi1Xm7CWtUnY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

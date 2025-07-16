@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow users to upload images only to their chat folders
+    match /chat_images/{chatId}/{imageName} {
+      // Check if user is authenticated
+      allow read: if request.auth != null;
+      
+      // Allow upload only if:
+      // 1. User is authenticated
+      // 2. File is an image (JPEG, PNG, GIF)
+      // 3. File size is under 10MB
+      // 4. User is a participant in the chat
+      allow write: if 
+        request.auth != null &&
+        request.resource.size < 10 * 1024 * 1024 && // 10MB limit
+        request.resource.contentType.matches('image/.*') &&
+        exists(/databases/$(firestore.default)/documents/chats/$(chatId)) &&
+        request.auth.uid in get(/databases/$(firestore.default)/documents/chats/$(chatId)).data.participants;
+      
+      // Allow delete only by chat participants
+      allow delete: if 
+        request.auth != null &&
+        exists(/databases/$(firestore.default)/documents/chats/$(chatId)) &&
+        request.auth.uid in get(/databases/$(firestore.default)/documents/chats/$(chatId)).data.participants;
+    }
+    
+    // Profile pictures - users can only upload to their own folder
+    match /profile_pictures/{userId}/{imageName} {
+      allow read: if request.auth != null;
+      allow write: if 
+        request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.size < 5 * 1024 * 1024 && // 5MB limit for profile pics
+        request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+} 
